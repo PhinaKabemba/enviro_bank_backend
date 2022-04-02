@@ -44,18 +44,22 @@ public class CurrentAccount extends Account implements AccountService {
                     accountNum));
         }
 
-        BigDecimal total = account.getBalance().add(account.getOverdraft());
+        if (amountToWithdraw.compareTo(account.getBalance()) > 0) {
+            BigDecimal remaining = amountToWithdraw.subtract(account.getBalance());
 
-        if (amountToWithdraw.compareTo(total) > 0) {
-            try {
-                throw new WithdrawalAmountTooLargeException(String.format("You do not have sufficient funds. You can only withdraw %s or less",
-                        total));
-            } catch (WithdrawalAmountTooLargeException e) {
-                System.out.println(e.getMessage());
+            if (remaining.compareTo(account.getOverdraft()) > 0) {
+                try {
+                    throw new WithdrawalAmountTooLargeException(String.format("You do not have sufficient funds. You can only withdraw %s or less",
+                            account.getOverdraft()));
+                } catch (WithdrawalAmountTooLargeException e) {
+                    System.out.println(e.getMessage());
+                }
+            } else {
+                this.setBalance(account.getBalance().subtract(amountToWithdraw));
             }
+        } else {
+            BigDecimal result = account.getBalance().subtract(amountToWithdraw);
+            this.setBalance(result);
         }
-
-        BigDecimal remainingBalance = total.subtract(amountToWithdraw);
-        this.setBalance(remainingBalance);
     }
 }

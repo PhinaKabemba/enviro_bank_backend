@@ -4,7 +4,9 @@ import com.enviro.bank.SystemDB;
 import com.enviro.bank.domains.Account;
 import com.enviro.bank.domains.CurrentAccount;
 import com.enviro.bank.domains.SavingsAccount;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -43,14 +45,27 @@ public class AccountController {
         return allAccounts;
     }
 
-    @PostMapping(value = "/deposit")
-    public Account deposit(String accountNumber, BigDecimal amount) {
-        return null;
-    }
-
     @PostMapping(value = "/withdraw")
     public Account withdraw(String accountNumber, BigDecimal amount) {
-        return null;
+
+        Account account = SystemDB.ACCOUNTS.get(accountNumber);
+
+        if (account != null) {
+
+            if (account instanceof CurrentAccount) {
+                CurrentAccount currentAccount = (CurrentAccount) account;
+                currentAccount.withdraw(accountNumber, amount);
+
+                return currentAccount;
+            } else {
+                SavingsAccount savingsAccount = (SavingsAccount) account;
+                savingsAccount.withdraw(accountNumber, amount);
+
+                return savingsAccount;
+            }
+        } else {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Bank account not found");
+        }
     }
 
 
